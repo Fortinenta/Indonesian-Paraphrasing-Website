@@ -1,3 +1,70 @@
+const commonIndonesianWords = [
+    'yang', 'di', 'dari', 'adalah', 'dengan', 'untuk', 'dan', 'atau', 'namun', 'tetapi',
+    'jika', 'maka', 'sehingga', 'karena', 'bahwa', 'ini', 'itu', 'tersebut', 'pada', 'dalam',
+    'ke', 'oleh', 'akan', 'telah', 'sudah', 'belum', 'bisa', 'dapat', 'harus', 'perlu',
+    'tidak', 'bukan', 'sangat', 'lebih', 'kurang', 'paling', 'juga', 'pun', 'saja', 'hanya',
+    'seperti', 'sebagai', 'yaitu', 'yakni', 'antara', 'melalui', 'menurut', 'demi', 'bagi',
+    'sejak', 'hingga', 'sampai', 'kecuali', 'selain', 'tanpa', 'bersama', 'serta', 'sambil',
+    'meskipun', 'walaupun', 'andaikan', 'seandainya', 'agar', 'supaya', 'meski', 'biarpun',
+    'seolah-olah', 'seakan-akan', 'daripada', 'daripada', 'kepada', 'terhadap', 'melainkan',
+    'bahkan', 'lagi', 'pula', 'justru', 'malah', 'memang', 'tentu', 'pasti', 'mungkin', 'barangkali',
+    'agaknya', 'rasanya', 'sepertinya', 'bisa jadi', 'kemungkinan besar', 'kalau boleh saya katakan',
+    'sepengetahuan saya', 'menurut hemat saya', 'emmm', 'ehh', 'anu', 'gimana ya', 'maksudnya',
+    'jadi gini', 'gitu lho', 'begini nih', 'nah itu dia', 'makanya tuh', 'itu sebabnya',
+    'jadi ceritanya', 'kok', 'lho', 'dong', 'sih', 'kan', 'ya kan', 'gitu kan', 'begitu kan',
+    'deh', 'aja', 'kali', 'banget', 'gue', 'lo', 'nih', 'toh', 'je', 'lha kok', 'toh ya',
+    'ya toh', 'gimana sih', 'masa sih', 'udah deh', 'kan ya', 'gitu lho', 'hmm', 'well',
+    'maksud saya', 'eh wait', 'atau lebih tepatnya', 'koreksi dikit', 'bukan gitu'
+];
+
+export const analyzeAndTagWords = (text) => {
+    const words = text.split(/(\s+)/); // Split by whitespace, keeping the whitespace
+    return words.map(word => {
+        const cleanedWord = word.toLowerCase().replace(/[^a-z0-9]/g, ''); // Remove punctuation for comparison
+        if (commonIndonesianWords.includes(cleanedWord)) {
+            return `[KATA_UMUM]${word}[/KATA_UMUM]`;
+        }
+        return `[KATA_KUNCI]${word}[/KATA_KUNCI]`;
+    }).join('');
+};
+
+export const removeTags = (text) => {
+    return text.replace(/\[KATA_KUNCI\]|\[\/KATA_KUNCI\]|\[KATA_UMUM\]|\[\/KATA_UMUM\]/g, '');
+};
+
+const informalPhrasesToAvoid = [
+    "menurut saya", "saya rasa", "kayaknya", "mungkin", "gitu", "lho", "deh", "sih",
+    "dong", "gue", "lo", "nih", "ya kan", "kan ya", "kok bisa", "masa sih", 
+    "kita semua tahu", "tentu saja", "semua orang tahu",
+    "saya", "kami", "kita", "anda" // Pronouns to avoid in academic style
+];
+
+export const filterInformalPhrases = (text) => {
+    let filteredText = text;
+    for (const phrase of informalPhrasesToAvoid) {
+        // Use a regex with word boundaries to avoid partial matches
+        const regex = new RegExp(`\\b${phrase}\\b`, 'gi');
+        // Replace with an empty string or a more formal equivalent if applicable
+        // For now, simple removal or replacement with a space to avoid merging words
+        if (["kayaknya", "gitu", "lho", "deh", "sih", "dong", "nih", "kok bisa", "masa sih"].includes(phrase)) {
+            filteredText = filteredText.replace(regex, ''); // Remove filler words
+        } else if (["menurut saya", "saya rasa"].includes(phrase)) {
+            filteredText = filteredText.replace(regex, 'berdasarkan analisis'); // Replace with a formal phrase
+        } else if (["mungkin"].includes(phrase)) {
+            filteredText = filteredText.replace(regex, 'kemungkinan besar');
+        } else if (["kita semua tahu", "tentu saja", "semua orang tahu"].includes(phrase)) {
+            filteredText = filteredText.replace(regex, 'dapat dipahami bahwa');
+        } else if (["saya", "kami", "kita", "anda"].includes(phrase)) {
+            filteredText = filteredText.replace(regex, 'penulis'); // Replace pronouns with 'penulis' or similar
+        } else {
+            filteredText = filteredText.replace(regex, ''); // Default to removal
+        }
+    }
+    // Clean up extra spaces left by removals
+    filteredText = filteredText.replace(/\s\s+/g, ' ').trim();
+    return filteredText;
+};
+
 /**
  * Calculates the Flesch-Kincaid Readability Ease score for Indonesian text.
  * This is a simplified adaptation as Flesch-Kincaid is primarily for English.
@@ -74,3 +141,10 @@ export const getReadingLevelDescription = (score) => {
   if (score >= 30) return 'Sulit';
   return 'Sangat Sulit';
 };
+
+export const processText = (text) => {
+    // This function will now be the entry point for the entire pipeline
+    // For now, it will just call analyzeAndTagWords
+    return analyzeAndTagWords(text);
+};
+

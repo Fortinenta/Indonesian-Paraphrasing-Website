@@ -1,9 +1,11 @@
 import axios from 'axios';
 
-const KATEGLO_API_URL = 'http://kateglo.com/api.php';
-// KBBI API is not officially public/free, so we'll simulate it or use a known public proxy if available.
-// For now, we'll simulate the KBBI API response.
-const KBBI_API_URL = 'https://kbbi.kemdikbud.go.id/api.php'; // Placeholder, actual API might differ or require auth
+const WIKIPEDIA_API_KEY = import.meta.env.VITE_WIKIPEDIA_API_KEY;
+const KBBI_API_URL = import.meta.env.VITE_KBBI_API_ENDPOINT || 'https://kbbi-api.vercel.app';
+const PLAGIARISM_CHECK_API = import.meta.env.VITE_PLAGIARISM_CHECK_API;
+const GRAMMAR_CHECK_API = import.meta.env.VITE_GRAMMAR_CHECK_API;
+const GOOGLE_BOOKS_API = import.meta.env.VITE_GOOGLE_BOOKS_API;
+const NEWS_API_INDONESIA = import.meta.env.VITE_NEWS_API_INDONESIA;
 
 /**
  * Fetches synonyms for a given word.
@@ -125,15 +127,21 @@ export const fetchWikipediaContext = async (searchText) => {
 };
 
 /**
- * Simulates fetching definition from KBBI API.
+ * Fetches definition from KBBI API.
  * @param {string} word The word to find definition for.
  * @returns {Promise<string>} A promise that resolves to the definition.
  */
 export const getKBBIDefinition = async (word) => {
-  // In a real application, you would integrate with a KBBI API here.
-  // For now, we return a simulated response.
-  console.log(`Simulating KBBI definition for: ${word}`);
-  return Promise.resolve(`(Simulated) Definisi untuk '${word}': Ini adalah definisi simulasi dari KBBI.`);
+  try {
+    const response = await axios.get(`${KBBI_API_URL}/search/${encodeURIComponent(word)}`);
+    if (response.data && response.data.data && response.data.data.length > 0) {
+      return response.data.data[0].arti;
+    }
+    return `Definisi untuk '${word}' tidak ditemukan.`;
+  } catch (error) {
+    console.error(`Error fetching KBBI definition for "${word}":`, error);
+    return `Gagal mengambil definisi untuk '${word}'.`;
+  }
 };
 
 /**
@@ -148,3 +156,52 @@ export const getGoogleTranslateHelp = async (text) => {
   return Promise.resolve(`(Simulated) Bantuan terjemahan untuk: '${text}'`);
 };
 
+/**
+ * Placeholder for Plagiarism Check API.
+ * @param {string} text The text to check for plagiarism.
+ * @returns {Promise<object>} A promise that resolves to plagiarism check results.
+ */
+export const checkPlagiarism = async (text) => {
+  console.log(`Simulating plagiarism check for: ${text}`);
+  // In a real application, integrate with a plagiarism API
+  return Promise.resolve({ score: Math.floor(Math.random() * 30), details: "Simulated plagiarism check results." });
+};
+
+/**
+ * Placeholder for Grammar Check API.
+ * @param {string} text The text to check for grammar.
+ * @returns {Promise<object>} A promise that resolves to grammar check results.
+ */
+export const checkGrammar = async (text) => {
+  console.log(`Simulating grammar check for: ${text}`);
+  // In a real application, integrate with a grammar API
+  return Promise.resolve({ errors: [], suggestions: [], score: 95 });
+};
+
+/**
+ * Placeholder for Google Books API integration.
+ * @param {string} query The search query for Google Books.
+ * @returns {Promise<object[]>} A promise that resolves to an array of book references.
+ */
+export const getGoogleBooksReferences = async (query) => {
+  console.log(`Simulating Google Books search for: ${query}`);
+  // In a real application, integrate with Google Books API
+  return Promise.resolve([
+    { title: "Simulated Book 1", author: "Author A", year: 2020 },
+    { title: "Simulated Book 2", author: "Author B", year: 2018 },
+  ]);
+};
+
+/**
+ * Placeholder for News API Indonesia integration.
+ * @param {string} query The search query for news.
+ * @returns {Promise<object[]>} A promise that resolves to an array of news articles.
+ */
+export const getNewsContext = async (query) => {
+  console.log(`Simulating News API Indonesia search for: ${query}`);
+  // In a real application, integrate with a News API
+  return Promise.resolve([
+    { title: "Simulated News 1", source: "News Source X", date: "2025-07-19" },
+    { title: "Simulated News 2", source: "News Source Y", date: "2025-07-18" },
+  ]);
+};
